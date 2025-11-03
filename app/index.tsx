@@ -2,12 +2,13 @@ import axios from 'axios';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
 import {
+  ActivityIndicator,
   Alert,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  View
+  View,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 
@@ -15,14 +16,23 @@ export default function StudentLogin() {
   const [regno, setRegno] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false); // <-- NEW
 
   const handleLogin = async () => {
+    if (!regno || !password) {
+      Alert.alert('Error', 'Please fill all fields');
+      return;
+    }
+
+    setLoading(true);
+
     try {
-      const BASE_URL = 'https://exammangement-system.onrender.com';  // Update this to your server's IP/domain
+      const BASE_URL = 'http://72.60.223.126:8081';
       const response = await axios.get(`${BASE_URL}/api/login/student/${regno}`);
-      console.log("response in student login - ", response);
+
       if (response.status !== 200) {
         Alert.alert('Error', 'Registration number not found');
+        setLoading(false);
         return;
       }
 
@@ -30,28 +40,29 @@ export default function StudentLogin() {
 
       if (data.password === password) {
         Alert.alert('Success', 'Login successful');
-
         const year = data.year;
-        
+
         setTimeout(() => {
-            router.push({
+          setLoading(false);
+          router.push({
             pathname: '/StudentMain',
             params: { API: `${BASE_URL}/api/${year}/${regno}` },
-            });
+          });
         }, 1000);
-        
       } else {
         Alert.alert('Error', 'Invalid password');
+        setLoading(false);
       }
     } catch (err) {
       Alert.alert('Error', 'Login failed due to network error, Please try again');
       console.error("err in student login - ", err);
+      setLoading(false);
     }
   };
 
   return (
     <View style={styles.container}>
-      <View style={styles.loginBox}>
+      <View style={styles.loginBox} pointerEvents={loading ? "none" : "auto"}>
         <Text style={styles.title}>Login</Text>
 
         <Text style={styles.label}>
@@ -62,6 +73,7 @@ export default function StudentLogin() {
           placeholder="Enter Register Number"
           value={regno}
           onChangeText={setRegno}
+          editable={!loading}
         />
 
         <Text style={styles.label}>
@@ -74,19 +86,34 @@ export default function StudentLogin() {
             secureTextEntry={!showPassword}
             value={password}
             onChangeText={setPassword}
+            editable={!loading}
+            returnKeyType='done'
+            onSubmitEditing={handleLogin}
           />
           <TouchableOpacity
             style={styles.eyeButton}
             onPress={() => setShowPassword((prev) => !prev)}
+            disabled={loading}
           >
             <Icon name={showPassword ? "eye-slash" : "eye"} size={20} color="gray" />
           </TouchableOpacity>
         </View>
 
-        <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
+        <TouchableOpacity
+          style={[styles.loginButton, loading && { opacity: 0.6 }]}
+          onPress={handleLogin}
+          disabled={loading}
+        >
           <Text style={styles.loginButtonText}>Login</Text>
         </TouchableOpacity>
       </View>
+
+      {loading && (
+        <View style={styles.overlay}>
+          <ActivityIndicator size="large" color="#007BFF" />
+          <Text style={{ color: '#007BFF', marginTop: 10 }}>Logging in...</Text>
+        </View>
+      )}
     </View>
   );
 }
@@ -136,6 +163,7 @@ const styles = StyleSheet.create({
   },
   eyeButton: {
     marginLeft: -40,
+    marginBottom: 15,
     padding: 10,
   },
   loginButton: {
@@ -150,105 +178,14 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
+  overlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(255,255,255,0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
 });
-
-
-
-// import { Image } from 'expo-image';
-// import { Platform, StyleSheet } from 'react-native';
-
-// import { HelloWave } from '@/components/hello-wave';
-// import ParallaxScrollView from '@/components/parallax-scroll-view';
-// import { ThemedText } from '@/components/themed-text';
-// import { ThemedView } from '@/components/themed-view';
-// import { Link } from 'expo-router';
-
-// export default function HomeScreen() {
-//   return (
-//     <ParallaxScrollView
-//       headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-//       headerImage={
-//         <Image
-//           source={require('@/assets/images/partial-react-logo.png')}
-//           style={styles.reactLogo}
-//         />
-//       }>
-//       <ThemedView style={styles.titleContainer}>
-//         <ThemedText type="title">Welcome!</ThemedText>
-//         <HelloWave />
-//       </ThemedView>
-//       <ThemedView style={styles.stepContainer}>
-//         <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-//         <ThemedText>
-//           Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-//           Press{' '}
-//           <ThemedText type="defaultSemiBold">
-//             {Platform.select({
-//               ios: 'cmd + d',
-//               android: 'cmd + m',
-//               web: 'F12',
-//             })}
-//           </ThemedText>{' '}
-//           to open developer tools.
-//         </ThemedText>
-//       </ThemedView>
-//       <ThemedView style={styles.stepContainer}>
-//         <Link href="/modal">
-//           <Link.Trigger>
-//             <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-//           </Link.Trigger>
-//           <Link.Preview />
-//           <Link.Menu>
-//             <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-//             <Link.MenuAction
-//               title="Share"
-//               icon="square.and.arrow.up"
-//               onPress={() => alert('Share pressed')}
-//             />
-//             <Link.Menu title="More" icon="ellipsis">
-//               <Link.MenuAction
-//                 title="Delete"
-//                 icon="trash"
-//                 destructive
-//                 onPress={() => alert('Delete pressed')}
-//               />
-//             </Link.Menu>
-//           </Link.Menu>
-//         </Link>
-
-//         <ThemedText>
-//           {`Tap the Explore tab to learn more about what's included in this starter app.`}
-//         </ThemedText>
-//       </ThemedView>
-//       <ThemedView style={styles.stepContainer}>
-//         <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-//         <ThemedText>
-//           {`When you're ready, run `}
-//           <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-//           <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-//           <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-//           <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-//         </ThemedText>
-//       </ThemedView>
-//     </ParallaxScrollView>
-//   );
-// }
-
-// const styles = StyleSheet.create({
-//   titleContainer: {
-//     flexDirection: 'row',
-//     alignItems: 'center',
-//     gap: 8,
-//   },
-//   stepContainer: {
-//     gap: 8,
-//     marginBottom: 8,
-//   },
-//   reactLogo: {
-//     height: 178,
-//     width: 290,
-//     bottom: 0,
-//     left: 0,
-//     position: 'absolute',
-//   },
-// });

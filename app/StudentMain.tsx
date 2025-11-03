@@ -2,6 +2,8 @@ import axios from 'axios';
 import { useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
+import Animated, { useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 
 export default function StudentMain() {
   interface StudentData {
@@ -28,7 +30,7 @@ export default function StudentMain() {
   const [examData, setExamData] = useState<ExamData[]>([]);
   const [filteredExamData, setFilteredExamData] = useState<ExamData[]>([]);
 
-  const BASE_URL = 'https://exammangement-system.onrender.com';
+  const BASE_URL = 'http://72.60.223.126:8081';
   const { API } = useLocalSearchParams();
 
   useEffect(() => {
@@ -83,88 +85,113 @@ export default function StudentMain() {
     return `${days}d ${hours}:${minutes}`;
   }
 
+  const scale = useSharedValue(1);
+
+  const pinch = Gesture.Pinch()
+    .onUpdate((event) => {
+      scale.value = event.scale;
+    })
+    .onEnd(() => {
+      if(scale.value < 1)
+        scale.value = 1;
+    });
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
   return (
-    <ScrollView style={styles.container}>
-      <Text style={styles.title}>Dashboard</Text>
-
-      {/* Profile */}
-      <View style={styles.profileContainer}>
-        <View style={styles.profilePic}>
-          <Text style={{ fontSize: 40 }}>👤</Text>
-        </View>
-        <View style={styles.profileDetails}>
-          <Text style={styles.name}>
-            Hey {studentData.name?.toUpperCase()}
-          </Text>
-
-          <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>Register number:</Text>
-            <Text style={styles.detailValue}>{studentData.regnum}</Text>
-
-            <Text style={styles.detailLabel}>Degree:</Text>
-            <Text style={styles.detailValue}>BE-ECE</Text>
-
-            <Text style={styles.detailLabel}>Batch:</Text>
-            <Text style={styles.detailValue}>{Batch}</Text>
-          </View>
-        </View>
-      </View>
-
-      {/* Table */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Seating Allotment</Text>
-
-        {/* Header */}
-        <View style={[styles.tableRow, styles.tableHeader]}>
-          <Text style={[styles.cell, styles.headerCell]}>S.No</Text>
-          <Text style={[styles.cell, styles.headerCell]}>Course Title</Text>
-          <Text style={[styles.cell, styles.headerCell]}>Course Title</Text>
-          <Text style={[styles.cell, styles.headerCell]}>Exam Date</Text>
-          <Text style={[styles.cell, styles.headerCell]}>Session</Text>
-          <Text style={[styles.cell, styles.headerCell]}>Hall</Text>
-        </View>
-
-        {/* Rows */}
-        {filteredExamData.map((data, index) => {
-          const roomList = studentData.roomno
-            ? studentData.roomno.split(',').map((r: string) => r.trim())
-            : [];
-          const currentRoom = roomList[index] || 'Not Allocated';
-
-          const examDate = new Date(data.date);
-          const now = new Date();
-
-          let releaseTime = new Date(examDate);
-          if (data.session === 'FN') {
-            releaseTime.setHours(8, 0, 0, 0);
-          } else {
-            releaseTime.setHours(12, 30, 0, 0);
-          }
-
-          let displayRoom =
-            releaseTime < now
-              ? currentRoom
-              : 'Wait ' + getDateTimeDiff(now, releaseTime);
-
-          return (
-            <View
-              key={index}
-              style={[
-                styles.tableRow,
-                index % 2 === 0 && styles.tableRowAlt,
-              ]}
-            >
-              <Text style={styles.cell}>{index + 1}</Text>
-              <Text style={styles.cell}>{data.coursecode}</Text>
-              <Text style={styles.cell}>{data.coursename}</Text>
-              <Text style={styles.cell}>{data.date}</Text>
-              <Text style={styles.cell}>{data.session}</Text>
-              <Text style={styles.cell}>{displayRoom}</Text>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+    <GestureDetector gesture={pinch}>
+      <Animated.View style={[{ flex: 1 }, animatedStyle]}>
+        <ScrollView style={styles.container}>
+          {/* Profile */}
+          <View style={styles.profileContainer}>
+            <View style={styles.profilePic}>
+              <Text style={{ fontSize: 40 }}>👤</Text>
             </View>
-          );
-        })}
-      </View>
-    </ScrollView>
+            <View style={styles.profileDetails}>
+              <Text style={styles.name}>
+                Hey {studentData.name?.toUpperCase()}
+              </Text>
+
+              <View style={styles.detailRows}>
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Register number:</Text>
+                  <Text style={styles.detailValue}>{studentData.regnum}</Text>
+                </View>
+                
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Degree:</Text>
+                  <Text style={styles.detailValue}>BE-ECE</Text>
+                </View>
+
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Batch:</Text>
+                  <Text style={styles.detailValue}>{Batch}</Text>
+                </View>
+              </View>
+            </View>
+          </View>
+
+          {/* Table */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Seating Allotment</Text>
+
+            {/* Header */}
+            <View style={[styles.tableRow, styles.tableHeader]}>
+              <Text style={[styles.cell, styles.headerCell, styles.smallTableCell]}>S.No</Text>
+              <Text style={[styles.cell, styles.headerCell]}>Course Title</Text>
+              <Text style={[styles.cell, styles.headerCell, styles.largeTableCell]}>Course Title</Text>
+              <Text style={[styles.cell, styles.headerCell]}>Exam Date</Text>
+              <Text style={[styles.cell, styles.headerCell, styles.smallTableCell]}>Session</Text>
+              <Text style={[styles.cell, styles.headerCell]}>Hall</Text>
+            </View>
+
+            {/* Rows */}
+            {filteredExamData.map((data, index) => {
+              const roomList = studentData.roomno
+                ? studentData.roomno.split(',').map((r: string) => r.trim())
+                : [];
+              const currentRoom = roomList[index] || 'Not Allocated';
+
+              const examDate = new Date(data.date);
+              const now = new Date();
+
+              let releaseTime = new Date(examDate);
+              if (data.session === 'FN') {
+                releaseTime.setHours(8, 0, 0, 0);
+              } else {
+                releaseTime.setHours(12, 30, 0, 0);
+              }
+
+              let displayRoom =
+                releaseTime < now
+                  ? currentRoom
+                  : 'Wait ' + getDateTimeDiff(now, releaseTime);
+
+              return (
+                <View
+                  key={index}
+                  style={[
+                    styles.tableRow,
+                    index % 2 === 0 && styles.tableRowAlt,
+                  ]}
+                >
+                  <Text style={[styles.cell, styles.smallCell]}>{index + 1}</Text>
+                  <Text style={styles.cell}>{data.coursecode}</Text>
+                  <Text style={[styles.cell, styles.largeCell]}>{data.coursename}</Text>
+                  <Text style={styles.cell}>{data.date}</Text>
+                  <Text style={[styles.cell, styles.smallCell]}>{data.session}</Text>
+                  <Text style={styles.cell}>{displayRoom}</Text>
+                </View>
+              );
+            })}
+          </View>
+        </ScrollView>
+      </Animated.View>
+    </GestureDetector>
+  </GestureHandlerRootView>
   );
 }
 
@@ -172,7 +199,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 12,
-    backgroundColor: '#fff',
+    backgroundColor: '#ffffffff',
   },
   title: {
     fontSize: 22,
@@ -185,7 +212,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 25,
+    paddingVertical : 10,
     gap: 20,
+    backgroundColor : '#f0f0f0',
+    borderRadius : 10
   },
   profilePic: {
     width: 80,
@@ -204,19 +234,22 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '700',
   },
-  detailRow: {
+  detailRows: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 10,
     marginTop: 10,
     alignItems: 'center',
   },
+  detailRow: {
+    flexDirection: 'row',
+    alignItems : 'center'
+  },
   detailLabel: {
     fontWeight: '600',
     color: '#555',
   },
   detailValue: {
-    backgroundColor: '#e8e8e8',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 5,
@@ -228,8 +261,8 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     marginBottom: 12,
-    fontWeight: '600',
-    textAlign: 'center',
+    fontWeight: '700',
+    textAlign: 'left',
   },
   tableRow: {
     flexDirection: 'row',
@@ -248,14 +281,26 @@ const styles = StyleSheet.create({
     backgroundColor: '#f0f0f0',
   },
   tableRowAlt: {
-    backgroundColor: '#fafafa', // zebra stripe
+    backgroundColor: '#f4f4f4',
   },
   cell: {
     flex: 1,
     fontSize: 13,
     textAlign: 'center',
     paddingVertical: 10,
-    borderRightWidth: 1, // vertical line
+    borderRightWidth: 1,
     borderColor: '#ccc',
   },
+  smallTableCell: {
+    flex: 0.5,
+  },
+  smallCell: {
+    flex: 0.5,
+  },
+  largeTableCell: {
+    flex: 1.5,
+  },
+  largeCell: {
+    flex: 1.5,
+  }
 });
