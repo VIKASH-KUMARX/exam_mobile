@@ -16,7 +16,7 @@ export default function StudentLogin() {
   const [regno, setRegno] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false); // <-- NEW
+  const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
     if (!regno || !password) {
@@ -27,7 +27,7 @@ export default function StudentLogin() {
     setLoading(true);
 
     try {
-      const BASE_URL = 'http://72.60.223.126:8081';
+      const BASE_URL = 'http://72.60.223.126:8080';
       const response = await axios.get(`${BASE_URL}/api/login/student/${regno}`);
 
       if (response.status !== 200) {

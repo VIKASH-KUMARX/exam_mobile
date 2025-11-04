@@ -30,7 +30,7 @@ export default function StudentMain() {
   const [examData, setExamData] = useState<ExamData[]>([]);
   const [filteredExamData, setFilteredExamData] = useState<ExamData[]>([]);
 
-  const BASE_URL = 'http://72.60.223.126:8081';
+  const BASE_URL = 'http://72.60.223.126:8080';
   const { API } = useLocalSearchParams();
 
   useEffect(() => {
