@@ -95,7 +95,7 @@ export default function StudentLogin() {
             onPress={() => setShowPassword((prev) => !prev)}
             disabled={loading}
           >
-            <Icon name={showPassword ? "eye-slash" : "eye"} size={20} color="gray" />
+            <Icon name={showPassword ? "eye" : "eye-slash"} size={20} color="gray" />
           </TouchableOpacity>
         </View>
 
