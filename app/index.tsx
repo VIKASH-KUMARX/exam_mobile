@@ -4,6 +4,9 @@ import React, { useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -27,14 +30,8 @@ export default function StudentLogin() {
     setLoading(true);
 
     try {
-      const BASE_URL = 'http://72.60.223.126:8080';
+      const BASE_URL = 'https://examease.org/api';
       const response = await axios.get(`${BASE_URL}/api/login/student/${regno}`);
-
-      if (response.status !== 200) {
-        Alert.alert('Error', 'Registration number not found');
-        setLoading(false);
-        return;
-      }
 
       const data = response.data;
 
@@ -53,68 +50,87 @@ export default function StudentLogin() {
         Alert.alert('Error', 'Invalid password');
         setLoading(false);
       }
-    } catch (err) {
-      Alert.alert('Error', 'Login failed due to network error, Please try again');
-      console.error("err in student login - ", err);
+    } catch (err: unknown) {
+      if (axios.isAxiosError(err)) {
+        if (err.response?.status === 404) {
+          Alert.alert("Error", "Registration number not found");
+        } else {
+          Alert.alert("Error", "Login failed, please try again");
+        }
+      } else {
+        Alert.alert("Error", "Something went wrong");
+      }
       setLoading(false);
     }
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.loginBox} pointerEvents={loading ? "none" : "auto"}>
-        <Text style={styles.title}>Login</Text>
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    >
+      <ScrollView
+        contentContainerStyle={{ flexGrow: 1, justifyContent: "center" }}
+        keyboardShouldPersistTaps="handled"
+      >
+        <View style={styles.container}>
+          <View style={styles.loginBox} pointerEvents={loading ? "none" : "auto"}>
+            <Text style={styles.title}>Login</Text>
 
-        <Text style={styles.label}>
-          Register number <Text style={styles.required}>*</Text>
-        </Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Enter Register Number"
-          value={regno}
-          onChangeText={setRegno}
-          editable={!loading}
-        />
+            <Text style={styles.label}>
+              Register number <Text style={styles.required}>*</Text>
+            </Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter Register Number"
+              value={regno}
+              onChangeText={setRegno}
+              editable={!loading}
+            />
 
-        <Text style={styles.label}>
-          Password <Text style={styles.required}>*</Text>
-        </Text>
-        <View style={styles.passwordWrapper}>
-          <TextInput
-            style={[styles.input, { flex: 1 }]}
-            placeholder="Enter Password"
-            secureTextEntry={!showPassword}
-            value={password}
-            onChangeText={setPassword}
-            editable={!loading}
-            returnKeyType='done'
-            onSubmitEditing={handleLogin}
-          />
-          <TouchableOpacity
-            style={styles.eyeButton}
-            onPress={() => setShowPassword((prev) => !prev)}
-            disabled={loading}
-          >
-            <Icon name={showPassword ? "eye" : "eye-slash"} size={20} color="gray" />
-          </TouchableOpacity>
+            <Text style={styles.label}>
+              Password <Text style={styles.required}>*</Text>
+            </Text>
+
+            <View style={styles.passwordWrapper}>
+              <TextInput
+                style={[styles.input, { flex: 1 }]}
+                placeholder="Enter Password"
+                secureTextEntry={!showPassword}
+                value={password}
+                onChangeText={setPassword}
+                editable={!loading}
+                returnKeyType="done"
+                onSubmitEditing={handleLogin}
+              />
+
+              <TouchableOpacity
+                style={styles.eyeButton}
+                onPress={() => setShowPassword((prev) => !prev)}
+                disabled={loading}
+              >
+                <Icon name={showPassword ? "eye" : "eye-slash"} size={20} color="gray" />
+              </TouchableOpacity>
+            </View>
+
+            <TouchableOpacity
+              style={[styles.loginButton, loading && { opacity: 0.6 }]}
+              onPress={handleLogin}
+              disabled={loading}
+            >
+              <Text style={styles.loginButtonText}>Login</Text>
+            </TouchableOpacity>
+          </View>
+
+          {loading && (
+            <View style={styles.overlay}>
+              <ActivityIndicator size="large" color="#007BFF" />
+              <Text style={{ color: '#007BFF', marginTop: 10 }}>Logging in...</Text>
+            </View>
+          )}
         </View>
-
-        <TouchableOpacity
-          style={[styles.loginButton, loading && { opacity: 0.6 }]}
-          onPress={handleLogin}
-          disabled={loading}
-        >
-          <Text style={styles.loginButtonText}>Login</Text>
-        </TouchableOpacity>
-      </View>
-
-      {loading && (
-        <View style={styles.overlay}>
-          <ActivityIndicator size="large" color="#007BFF" />
-          <Text style={{ color: '#007BFF', marginTop: 10 }}>Logging in...</Text>
-        </View>
-      )}
-    </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
